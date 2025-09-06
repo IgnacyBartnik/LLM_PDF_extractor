@@ -17,7 +17,7 @@ def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
         "log_level": os.getenv("LOG_LEVEL", "INFO"),
         "max_file_size": int(os.getenv("MAX_FILE_SIZE", "52428800")),  # 50MB
         "supported_formats": [".pdf"],
-        "default_model": os.getenv("DEFAULT_MODEL", "gpt-4"),
+        "default_model": os.getenv("DEFAULT_MODEL", "gpt-5-nano"),
         "default_temperature": float(os.getenv("DEFAULT_TEMPERATURE", "0.1")),
         "default_max_tokens": int(os.getenv("DEFAULT_MAX_TOKENS", "1000")),
         "retry_attempts": int(os.getenv("RETRY_ATTEMPTS", "3")),
@@ -73,7 +73,7 @@ def create_default_config(config_path: str = "config.json") -> bool:
         "log_level": "INFO",
         "max_file_size": 52428800,
         "supported_formats": [".pdf"],
-        "default_model": "gpt-4",
+        "default_model": "gpt-5-nano",
         "default_temperature": 0.1,
         "default_max_tokens": 1000,
         "retry_attempts": 3,

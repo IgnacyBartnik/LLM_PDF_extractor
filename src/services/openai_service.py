@@ -10,6 +10,9 @@ from openai import OpenAI
 import json
 import time
 
+from dotenv import load_dotenv
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -18,12 +21,13 @@ class OpenAIService:
     
     def __init__(self, api_key: Optional[str] = None):
         """Initialize OpenAI service."""
+        load_dotenv()
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         if not self.api_key:
             raise ValueError("OpenAI API key is required")
         
         self.client = OpenAI(api_key=self.api_key)
-        self.default_model = "gpt-4"
+        self.default_model = "gpt-5-nano"
         self.max_retries = 3
         self.retry_delay = 1
     
@@ -124,7 +128,7 @@ Please respond with a JSON object in this exact format:
                         }
                     ],
                     temperature=temperature,
-                    max_tokens=2000
+                    max_completion_tokens=2000
                 )
                 
                 return response.choices[0].message.content
@@ -222,4 +226,4 @@ Please respond with a JSON object in this exact format:
             return [model.id for model in models.data if "gpt" in model.id]
         except Exception as e:
             logger.error(f"Failed to get available models: {e}")
-            return ["gpt-4", "gpt-3.5-turbo"]  # Fallback to common models
+            return ["gpt-5-nano", "gpt-5-mini", "gpt-5"]  # Fallback to common models

@@ -21,7 +21,7 @@ from models.database import DatabaseManager
 from models.schemas import ExtractionConfig
 from services.openai_service import OpenAIService
 from services.extraction_service import ExtractionService
-
+from dotenv import load_dotenv
 
 def initialize_services():
     """Initialize all services."""
@@ -30,6 +30,7 @@ def initialize_services():
         db_manager = DatabaseManager()
         
         # Initialize OpenAI service
+        load_dotenv()
         openai_api_key = os.getenv("OPENAI_API_KEY")
         if not openai_api_key:
             st.error("OpenAI API key not found. Please set OPENAI_API_KEY environment variable.")
@@ -90,7 +91,7 @@ def main():
         st.subheader("AI Model Settings")
         model_name = st.selectbox(
             "Model", 
-            ["gpt-4", "gpt-3.5-turbo"],
+            ["gpt-5-nano", "gpt-5-mini", "gpt-5"],
             help="Select the OpenAI model to use for extraction"
         )
         

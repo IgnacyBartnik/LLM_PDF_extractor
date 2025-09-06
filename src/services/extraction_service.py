@@ -7,13 +7,17 @@ import time
 from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime
 
-from ..models.schemas import (
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+
+from src.models.schemas import (
     FormMetadata, 
     ExtractedData, 
     ExtractionConfig, 
     ExtractionResult
 )
-from ..models.database import DatabaseManager
+from src.models.database import DatabaseManager
 from .pdf_processor import PDFProcessor
 from .openai_service import OpenAIService
 
