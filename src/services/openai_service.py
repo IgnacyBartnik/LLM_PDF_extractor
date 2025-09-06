@@ -37,6 +37,7 @@ class OpenAIService:
         extraction_fields: List[str],
         form_type: str = "general",
         model: str = None,
+        max_completion_tokens: int = 6000,
         temperature: float = 1
     ) -> Dict[str, Any]:
         """
@@ -58,7 +59,7 @@ class OpenAIService:
         prompt = self._create_extraction_prompt(text, extraction_fields, form_type)
         
         try:
-            response = self._make_api_call(prompt, model, temperature)
+            response = self._make_api_call(prompt, model, max_completion_tokens, temperature)
             return self._parse_extraction_response(response, extraction_fields)
             
         except Exception as e:
@@ -86,14 +87,13 @@ You are an expert at extracting structured data from {form_type} forms.
 Please extract the following fields from the provided text: {fields_str}
 
 Instructions:
-1. Analyze the text carefully and identify the requested information
+1. Analyze the text carefully and identify the requested information. It might be presented before or after the field name, or in a different format.
 2. If a field is not found, use "Not found" as the value
 3. Return the data in JSON format with the exact field names requested
 4. Include confidence scores (0.0 to 1.0) for each extraction
-5. Provide brief reasoning for each extraction
 
 Text to analyze:
-{text[:8000]}  # Limit text length to avoid token limits
+{text}  # Limit text length to avoid token limits
 
 Please respond with a JSON object in this exact format:
 {{
@@ -110,7 +110,7 @@ Please respond with a JSON object in this exact format:
 """
         return prompt
     
-    def _make_api_call(self, prompt: str, model: str, temperature: float) -> str:
+    def _make_api_call(self, prompt: str, model: str, max_completion_tokens: int, temperature: float) -> str:
         """Make API call to OpenAI with retry logic."""
         
         for attempt in range(self.max_retries):
@@ -128,7 +128,7 @@ Please respond with a JSON object in this exact format:
                         }
                     ],
                     temperature=temperature,
-                    max_completion_tokens=2000
+                    max_completion_tokens=max_completion_tokens
                 )
                 
                 return response.choices[0].message.content

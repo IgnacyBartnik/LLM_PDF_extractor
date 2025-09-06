@@ -4,7 +4,7 @@ PDF processing service for text extraction.
 
 import pypdf as PyPDF2  # modern replacement for PyPDF2
 import logging
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict
 from pathlib import Path
 import io
 
