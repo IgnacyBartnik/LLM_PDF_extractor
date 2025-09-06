@@ -96,6 +96,11 @@ class PDFProcessor:
         Returns:
             Tuple of (is_valid, error_message)
         """
+        # Check file size (reasonable limits) before attempting to parse PDF
+        if len(file_content) > 50 * 1024 * 1024:  # 50MB limit
+            return False, "PDF file is too large (max 50MB)"
+        if len(file_content) < 100:  # 100 bytes minimum
+            return False, "PDF file is too small"
         try:
             pdf_file = io.BytesIO(file_content)
             pdf_reader = PyPDF2.PdfReader(pdf_file)
@@ -104,14 +109,9 @@ class PDFProcessor:
             if not pdf_reader.pages:
                 return False, "PDF file has no pages"
             
-            # Check file size (reasonable limits)
-            if len(file_content) > 50 * 1024 * 1024:  # 50MB limit
-                return False, "PDF file is too large (max 50MB)"
-            
-            if len(file_content) < 100:  # 100 bytes minimum
-                return False, "PDF file is too small"
-            
             return True, None
             
+        except Exception as e:
+            return False, f"PDF validation failed: {str(e)}"
         except Exception as e:
             return False, f"PDF validation failed: {str(e)}"
