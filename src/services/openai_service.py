@@ -37,7 +37,7 @@ class OpenAIService:
         extraction_fields: List[str],
         form_type: str = "general",
         model: str = None,
-        temperature: float = 0.1
+        temperature: float = 1
     ) -> Dict[str, Any]:
         """
         Extract structured data from text using OpenAI.

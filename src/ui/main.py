@@ -95,14 +95,6 @@ def main():
             help="Select the OpenAI model to use for extraction"
         )
         
-        temperature = st.slider(
-            "Temperature", 
-            min_value=0.0, 
-            max_value=2.0, 
-            value=0.1, 
-            step=0.1,
-            help="Lower values make responses more focused and deterministic"
-        )
         
         max_tokens = st.slider(
             "Max Tokens", 
@@ -197,7 +189,6 @@ def main():
                                 form_type=selected_template,
                                 extraction_fields=all_fields,
                                 model_name=model_name,
-                                temperature=temperature,
                                 max_tokens=max_tokens
                             )
                             

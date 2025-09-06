@@ -13,9 +13,8 @@ class ExtractionConfig(BaseModel):
     form_type: str = Field(..., description="Type of form being processed")
     extraction_fields: List[str] = Field(..., description="List of fields to extract")
     model_name: str = Field(default="gpt-5-nano", description="OpenAI model to use")
-    temperature: float = Field(default=1, description="Model temperature for extraction")
     max_completion_tokens: int = Field(default=1000, description="Maximum tokens for response")
-
+    temperature: float = Field(default=1, description="Model temperature for extraction")
 
 class FormMetadata(BaseModel):
     """Metadata about the uploaded form."""
