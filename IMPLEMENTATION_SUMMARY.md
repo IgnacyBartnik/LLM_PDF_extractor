@@ -32,8 +32,7 @@ I've built a  **LLM PDF Extractor** application that xtracts structured data fro
 class ExtractionConfig(BaseModel):
     form_type: str
     extraction_fields: List[str]
-    model_name: str = "gpt-4"
-    temperature: float = 0.1
+    model_name: str = "gpt-5-nano"
 
 class ExtractedData(BaseModel):
     field_name: str
