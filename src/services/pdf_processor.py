@@ -7,7 +7,7 @@ import logging
 from typing import Optional, Tuple, Dict
 from pathlib import Path
 import io
-
+from io import BytesIO
 import fitz  # PyMuPDF
 
 
@@ -33,8 +33,9 @@ class PDFProcessor:
         """
         try:
             file_stream=io.BytesIO(file_bytes)
-            # if not self.is_supported_file(file_bytes):
-            #     return False, "", [], "Unsupported file type"
+            success, message = self.validate_pdf(file_stream)
+            if not success:
+                return False, "", [], message
 
             doc = fitz.open(stream=file_stream, filetype="pdf")
             if len(doc) == 0:
@@ -116,15 +117,22 @@ class PDFProcessor:
         Returns:
             (is_valid, error_message)
         """
-        # Size checks before parsing
-        if len(file_content) > 50 * 1024 * 1024:  # 50MB limit
+
+        # file_content can be bytes or BytesIO
+        if isinstance(file_content, BytesIO):
+            size = file_content.getbuffer().nbytes
+        elif isinstance(file_content, bytes):
+            size = len(file_content)
+        else:
+            return False, "Unsupported file type"
+
+        if size > 50 * 1024 * 1024:  # 50MB
             return False, "PDF file is too large (max 50MB)"
-        if len(file_content) < 100:  # 100 bytes minimum
+        if size < 100:  # 100 bytes minimum
             return False, "PDF file is too small"
 
         try:
-            pdf_file = io.BytesIO(file_content)
-            doc = fitz.open(stream=pdf_file, filetype="pdf")
+            doc = fitz.open(stream=file_content, filetype="pdf")
 
             # Check if PDF has at least one page
             if len(doc) == 0:
