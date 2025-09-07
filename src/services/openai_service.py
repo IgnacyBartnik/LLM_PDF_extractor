@@ -34,6 +34,7 @@ class OpenAIService:
     def extract_data_from_text(
         self, 
         text: str, 
+        tables: List[Any],
         extraction_fields: List[str],
         form_type: str = "general",
         model: str = None,
@@ -56,11 +57,10 @@ class OpenAIService:
         model = model or self.default_model
         
         # Create extraction prompt
-    tables = []  # Initialize tables argument
-            prompt = self._create_extraction_prompt(text, extraction_fields, form_type, tables)
+        self.prompt = self._create_extraction_prompt(text, extraction_fields, form_type, tables)
         
         try:
-            response = self._make_api_call(prompt, model, max_completion_tokens, temperature)
+            response = self._make_api_call(self.prompt, model, max_completion_tokens, temperature)
             return self._parse_extraction_response(response, extraction_fields)
             
         except Exception as e:
@@ -71,24 +71,21 @@ class OpenAIService:
                 "extracted_data": {},
                 "confidence_scores": {}
             }
-    
-        def _tables_to_markdown(self, tables):
-            """Convert list of tables (pandas DataFrames or lists) to markdown format for LLM context."""
-            import pandas as pd
-            md = []
-            for i, t in enumerate(tables):
-                if hasattr(t, 'to_markdown'):
-                    md.append(f"\n--- Table {i+1} ---\n" + t.to_markdown(index=False))
-                elif isinstance(t, list):
-                    # Assume list of lists
-                    import tabulate
-                    md.append(f"\n--- Table {i+1} ---\n" + tabulate.tabulate(t, tablefmt="github"))
-            return "\n".join(md)
-    
-    def _create_extraction_prompt(
-        self, 
-        text: str, 
-        extraction_fields: List[str], 
+
+    def _tables_to_markdown(self, tables):
+        """Convert list of tables (pandas DataFrames or lists) to markdown format for LLM context."""
+        import pandas as pd
+        md = []
+        for i, t in enumerate(tables):
+            if hasattr(t, 'to_markdown'):
+                md.append(f"\n--- Table {i+1} ---\n" + t.to_markdown(index=False))
+            elif isinstance(t, list):
+                # Assume list of lists
+                import tabulate
+                md.append(f"\n--- Table {i+1} ---\n" + tabulate.tabulate(t, tablefmt="github"))
+        return "\n".join(md)
+
+
     def _create_extraction_prompt(
         self,
         text: str,
@@ -99,7 +96,7 @@ class OpenAIService:
         """Create a structured prompt for data extraction, including tables if present."""
         fields_str = ", ".join([f'"{field}"' for field in extraction_fields])
         tables_markdown = self._tables_to_markdown(tables or [])
-        prompt = f"""
+        self.prompt = f"""
 You are an expert at extracting structured data from {form_type} forms.
 
 Please extract the following fields from the provided text and tables: {fields_str}
@@ -129,7 +126,7 @@ Please respond with a JSON object in this exact format:
     }}
 }}
 """
-        return prompt
+        return self.prompt
     
     def _make_api_call(self, prompt: str, model: str, max_completion_tokens: int, temperature: float) -> str:
         """Make API call to OpenAI with retry logic."""
@@ -173,7 +170,7 @@ Please respond with a JSON object in this exact format:
         
         raise Exception("Failed to make API call after all retries")
     
-    def _parse_extraction_response(self, response: str, expected_fields: List[str]) -> Dict[str, Any]:
+    def _parse_extraction_response(self, response: str, expected_fields: List[str], extracted_tables: List[any] = []) -> Dict[str, Any]:
         """Parse and validate the extraction response."""
         
         try:
@@ -204,8 +201,8 @@ Please respond with a JSON object in this exact format:
                     extracted_data[field] = "Not found"
                 if field not in confidence_scores:
                     confidence_scores[field] = 0.0
-            tables_markdown = self._tables_to_markdown(tables or [])
-            prompt += f"\nTables to analyze (in markdown):\n{tables_markdown if tables_markdown else 'No tables detected.'}\n"
+            tables_markdown = self._tables_to_markdown(extracted_tables or [])
+            self.prompt += f"\nTables to analyze (in markdown):\n{tables_markdown if tables_markdown else 'No tables detected.'}\n"
             
             return {
                 "success": True,

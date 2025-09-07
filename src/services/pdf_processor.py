@@ -25,17 +25,18 @@ class PDFProcessor:
     def is_supported_file(self, filename: str) -> bool:
         return Path(filename).suffix.lower() in self.supported_extensions
 
-    def extract_text_and_tables(self, file_path: str):
+    def extract_text_and_tables(self, file_bytes: str):
         """
         Extract text and tables from a PDF file.
         Returns:
             (success, text_content, tables, error_message)
         """
         try:
-            if not self.is_supported_file(file_path):
-                return False, "", [], "Unsupported file type"
+            file_stream=io.BytesIO(file_bytes)
+            # if not self.is_supported_file(file_bytes):
+            #     return False, "", [], "Unsupported file type"
 
-            doc = fitz.open(file_path)
+            doc = fitz.open(stream=file_stream, filetype="pdf")
             if len(doc) == 0:
                 return False, "", [], "PDF file appears to be empty or corrupted"
 
@@ -57,7 +58,7 @@ class PDFProcessor:
             # Table extraction using camelot
             try:
                 import camelot
-                tables = camelot.read_pdf(file_path, pages="all")
+                tables = camelot.read_pdf(stream=file_bytes, pages="all")
                 extracted_tables = [t.df for t in tables]
                 logger.info(f"Extracted {len(extracted_tables)} tables from PDF.")
             except Exception as e:
