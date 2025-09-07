@@ -30,6 +30,9 @@ ENV/
 env/
 .venv/
 
+# Do include this file
+!.env.example
+
 # IDEs
 .vscode/
 .idea/
