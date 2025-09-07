@@ -56,7 +56,8 @@ class OpenAIService:
         model = model or self.default_model
         
         # Create extraction prompt
-        prompt = self._create_extraction_prompt(text, extraction_fields, form_type)
+    tables = []  # Initialize tables argument
+            prompt = self._create_extraction_prompt(text, extraction_fields, form_type, tables)
         
         try:
             response = self._make_api_call(prompt, model, max_completion_tokens, temperature)
@@ -71,29 +72,49 @@ class OpenAIService:
                 "confidence_scores": {}
             }
     
+        def _tables_to_markdown(self, tables):
+            """Convert list of tables (pandas DataFrames or lists) to markdown format for LLM context."""
+            import pandas as pd
+            md = []
+            for i, t in enumerate(tables):
+                if hasattr(t, 'to_markdown'):
+                    md.append(f"\n--- Table {i+1} ---\n" + t.to_markdown(index=False))
+                elif isinstance(t, list):
+                    # Assume list of lists
+                    import tabulate
+                    md.append(f"\n--- Table {i+1} ---\n" + tabulate.tabulate(t, tablefmt="github"))
+            return "\n".join(md)
+    
     def _create_extraction_prompt(
         self, 
         text: str, 
         extraction_fields: List[str], 
-        form_type: str
+    def _create_extraction_prompt(
+        self,
+        text: str,
+        extraction_fields: List[str],
+        form_type: str,
+        tables: List[Any] = None
     ) -> str:
-        """Create a structured prompt for data extraction."""
-        
+        """Create a structured prompt for data extraction, including tables if present."""
         fields_str = ", ".join([f'"{field}"' for field in extraction_fields])
-        
+        tables_markdown = self._tables_to_markdown(tables or [])
         prompt = f"""
-You are an expert at extracting structured data from {form_type} forms. 
+You are an expert at extracting structured data from {form_type} forms.
 
-Please extract the following fields from the provided text: {fields_str}
+Please extract the following fields from the provided text and tables: {fields_str}
 
 Instructions:
-1. Analyze the text carefully and identify the requested information. It might be presented before or after the field name, or in a different format.
+1. Analyze the text and tables carefully and identify the requested information. It might be presented before or after the field name, or in a different format.
 2. If a field is not found, use "Not found" as the value
 3. Return the data in JSON format with the exact field names requested
 4. Include confidence scores (0.0 to 1.0) for each extraction
 
 Text to analyze:
-{text}  # Limit text length to avoid token limits
+{text[:8000]}
+
+Tables to analyze (in markdown):
+{tables_markdown if tables_markdown else 'No tables detected.'}
 
 Please respond with a JSON object in this exact format:
 {{
@@ -183,8 +204,8 @@ Please respond with a JSON object in this exact format:
                     extracted_data[field] = "Not found"
                 if field not in confidence_scores:
                     confidence_scores[field] = 0.0
-                if field not in reasoning:
-                    reasoning[field] = "Field not found in document"
+            tables_markdown = self._tables_to_markdown(tables or [])
+            prompt += f"\nTables to analyze (in markdown):\n{tables_markdown if tables_markdown else 'No tables detected.'}\n"
             
             return {
                 "success": True,

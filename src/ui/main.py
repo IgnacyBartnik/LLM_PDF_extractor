@@ -148,13 +148,16 @@ def main():
                         # Read file content
                         file_content = uploaded_file.read()
                         
-                        # Extract text for preview
+                        # Extract text and tables for preview
                         from services.pdf_processor import PDFProcessor
                         pdf_processor = PDFProcessor()
-                        success, text, error = pdf_processor.extract_text(file_content)
-                        
+                        success, text, tables, error = pdf_processor.extract_text_and_tables(file_content)
                         if success:
                             st.text_area("Extracted Text Preview", text[:2000] + "..." if len(text) > 2000 else text, height=300)
+                            if tables:
+                                st.write(f"Extracted {len(tables)} tables:")
+                                for i, table in enumerate(tables):
+                                    st.dataframe(table, use_container_width=True)
                         else:
                             st.error(f"Failed to extract text: {error}")
                     except Exception as e:

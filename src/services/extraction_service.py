@@ -121,8 +121,8 @@ class ExtractionService:
             form_id = self.db_manager.insert_form(form_metadata)
             form_metadata.id = form_id
             
-            # Extract text from PDF
-            text_success, extracted_text, text_error = self.pdf_processor.extract_text(file_content)
+            # Extract text and tables from PDF
+            text_success, extracted_text, extracted_tables, text_error = self.pdf_processor.extract_text_and_tables(file_content)
             if not text_success:
                 self.db_manager.update_form_status(form_id, "failed", text_error)
                 return ExtractionResult(
@@ -133,14 +133,16 @@ class ExtractionService:
                     error_message=text_error
                 )
             
-            # Use AI to extract structured data
+            # Use AI to extract structured data (pass both text and tables)
             ai_result = self.openai_service.extract_data_from_text(
                 text=extracted_text,
+                tables=extracted_tables,
                 extraction_fields=extraction_config.extraction_fields,
                 form_type=extraction_config.form_type,
                 model=extraction_config.model_name,
                 temperature=extraction_config.temperature
             )
+            # Optionally: you could add table-based extraction here in the future
             
             if not ai_result.get("success", False):
                 error_msg = ai_result.get("error", "AI extraction failed")
